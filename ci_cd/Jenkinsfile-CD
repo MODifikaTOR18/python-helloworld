@@ -1,0 +1,55 @@
+@Library(['general', 'deploy']) _
+
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        disableConcurrentBuilds()
+        timestamps()
+        ansiColor('xterm')
+    }
+
+    environment {
+        SERVICE = 'service.json'
+        GIT_REPO_OWNER = 'MODifikaTOR18'
+        GIT_REPO_NAME = 'python-helloworld'
+        DOCKER_REGISTRY = "ghcr.io/${GIT_REPO_OWNER.toLowerCase()}"
+    }
+
+    stages {
+        stage ('Prepare') {
+            steps {
+                script {
+                    apps = readJSON file: SERVICE
+                    TAG_STACK = sh(returnStdout: true, script: "git tag --sort version:refname | tail -1").trim()
+                    env.TAG = (TAG_STACK.isEmpty()) ? 'latest' : TAG_STACK
+                }
+            }
+        }
+
+        stage ('Deploy') {
+            steps {
+                script {
+                    log.info("Running images from list ${apps} with tag ${env.TAG}")
+                    try {
+                        runStages = stageDeploy(apps)
+                        runStages.each { stage ->
+                            parallel stage
+                        }
+                        log.info("Images started!")
+                    }
+                    catch (Exception e) {
+                        Error("Error running images! ${e}")
+                    }
+                }
+                
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

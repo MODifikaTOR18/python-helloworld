@@ -1,0 +1,174 @@
+@Library(['build', 'general']) _
+
+def stagePrepare(flag, apps, parallel_count) {
+    stageList = []
+    stageMap = [:]
+    apps.eachWithIndex { app, path, i ->
+        Integer lock_id = i % parallel_count
+        if (flag == 'build') {
+            stageMap.put(app, stageBuildCreate(app, path, lock_id))
+        } else {
+            stageMap.put(app, stageImageCreate(app, path, lock_id))
+        }
+    }
+    stageList.add(stageMap)
+    return stageList
+}
+
+def stageBuildCreate(app, path, lock_id) {
+    return {
+        stage(app) {
+            lock("Build-lock-${lock_id}") {
+                dir(path) {
+                    sh """
+                        docker rm -f ${app}
+                        [ -d target] || mkdir target
+                        docker build -t ${app} -f Dockerfile-build .
+                        docker run --name ${app} ${app} mvn test &&
+                        docker cp ${app}:/app/target/ target/
+                        docker rm -f ${app}
+                    """
+                    builtApps.put(app, path)
+                }
+            }
+        }
+    }
+}
+
+def stageImageCreate(app, path, lock_id) {
+    return {
+        stage(app) {
+            lock("Image-create-lock-${lock_id}") {
+                dir (path) {
+                    sh "docker build -t ${app} -f Dockerfile-create ."
+                }
+            }
+        }
+    }
+}
+
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        disableConcurrentBuilds()
+        timestamps()
+        ansiColor('xterm')
+    }
+
+    environment {
+        SERVICE = 'service.json'
+        GIT_REPO_OWNER = 'MODifikaTOR18'
+        GIT_REPO_NAME = 'python-helloworld'
+        DOCKER_REGISTRY = "ghcr.io/${GIT_REPO_OWNER.toLowerCase()}"
+    }
+
+    stages {
+        stage('Prepare') {
+            steps {
+                script {
+                    log.info("Starting preparation steps...")
+                    PR_ID = prID.prID(env.BRANCH_NAME)
+                    apps = ${SERVICE}
+                    log.info ("Branch: ${env.BRANCH_NAME}")
+                    log.info ("Pull request ID: ${PR_ID}")
+
+                    TAG_STACK = sh(returnStdout: true, script: "git tag --sort version:refname | tail -1").trim()
+                    
+                    env.TAG = (TAG_STACK.isEmpty()) ? 'latest' : TAG_STACK
+                    log.info ("Current tag for build is: ${env.TAG}")
+                    PR_DIFF=[]
+                    BUILD_APPS=[:]
+                    
+                    PR_DIFF=sh(script: 'git show --pretty=format: --name-only', returnStdout: true).trim()
+                    log.info ("Pull request diffs:\n${PR_DIFF}")
+                    if (PR_ID.isEmpty()) {
+                        log.warning ("Pull request id not found")
+                        def response = httpRequest url: "https://api.github.com/repos/${GIT_REPO_OWNER}/${GIT_REPO_NAME}/pulls/${PR_ID}/files",
+                                                    customHeaders: [[name: 'Accept', value: 'application/vnd.github+json'],[name: 'X-GitHub-Api-Version', value: '2022-11-28']],
+                                                    authentication: 'GitHub_ID'
+
+
+                        log.info("Request status Github API: "+response.status)
+                        PR_DIFF_DATA = readJSON text: response.content
+                        PR_DIFF_DATA.each { item ->
+                            PR_DIFF.add(item.filename)
+                        }
+                        log.info ("PR diff: ${PR_DIFF}")
+                        apps.each { app, path ->
+                            if (isChanged.isChanged(PR_DIFF, path)) {
+                                BUILD_APPS.put(app, path)
+                            }
+                        }
+                    } else {
+                        BUILD_APPS = apps
+                    }
+                    
+                    log.info("Build apps: ${BUILD_APPS}")
+                    Integer PARALLEL_EXECUTE_COUNT = 1
+                    builtApps = [:]
+                    buildStages = stagePrepare('build', BUILD_APPS, PARALLEL_EXECUTE_COUNT, builtApps)
+                    log.info("Prepared!")
+                }
+            }
+        }
+
+        stage ('Parallel build') {
+            steps {
+                script {
+                    log.info("Starting parallel image build...")
+                    buildStages.each { stage ->
+                        parallel stage
+                    }
+                    log.info("Parallel image build succeeded!")
+                }
+            }
+        }
+
+        stage ('Parallel create image') {
+            when { expression { BRANCH_NAME == 'master'}} //|| BRANCH_NAME ==~ "pr-"+/\d+/ } }
+            steps {
+                script {
+                    log.info("Starting parallel image create...")
+                    log.info("Apps were built: ${builtApps}")
+                    Integer PARALLEL_EXECUTE_COUNT = 1
+                    createImageStages = stagePrepare.call('image', builtApps, PARALLEL_EXECUTE_COUNT)
+                    createImageStages.each { stage ->
+                        parallel stage
+                    }
+                    log.info("Images were created.")
+                }
+            }
+        }
+
+        stage ('Push image') {
+            when { expression { BRANCH_NAME == 'master'}} //|| BRANCH_NAME ==~ "PR-"+/\d+/ } }
+            steps {
+                script {
+                    log.info("Beginning to push images to GitHub...")
+                    log.info("Tag added to images: ${env.TAG}")
+                    pushedApps = []
+                    withCredentials([usernamePassword(credentialsId: 'GitHub_ID', passwordVariable: 'pass', usernameVariable: 'user')]) {
+                        sh "echo ${pass} | docker login ${DOCKER_REGISTRY} -u ${user} --password-stdin"
+                        log.info("Successfully logged in.")
+                    }
+                    builtApps.each { app, path ->
+                        sh "docker push ${DOCKER_REGISTRY}/${app}:${TAG}"
+                        pushedApps.add(app)
+                        log.info("Successfully pushed docker image ${app} to Docker registry.")
+                    }
+                    log.info("Images were pushed to GitHub!")
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            build job: 'builds/cd', wait: false
+        }
+    }
+}
