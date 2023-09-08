@@ -25,7 +25,7 @@ pipeline {
                     log.info ("Branch: ${env.BRANCH_NAME}")
                     PR_ID = prID.prID(env.BRANCH_NAME)
                     log.info ("Pull request ID: ${PR_ID}")
-                    apps = ${SERVICE}
+                    apps = ${env.SERVICE}
                     log.info ("Build app is ${apps}")
 
                     TAG_STACK = sh(returnStdout: true, script: "git tag --sort version:refname | tail -1").trim()
