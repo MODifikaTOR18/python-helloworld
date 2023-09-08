@@ -22,8 +22,8 @@ pipeline {
             steps {
                 script {
                     log.info("Starting preparation steps...")
-                    PR_ID = prID(BRANCH_NAME)
                     log.info ("Branch: ${env.BRANCH_NAME}")
+                    PR_ID = prID.prID(env.BRANCH_NAME)
                     log.info ("Pull request ID: ${PR_ID}")
                     apps = ${SERVICE}
                     log.info ("Build app is ${apps}")
@@ -124,8 +124,8 @@ pipeline {
         always {
             cleanWs()
         }
-        success {
-            build job: 'builds/cd', wait: false
-        }
+        // success {
+        //     build job: 'builds/cd', wait: false
+        // }
     }
 }
