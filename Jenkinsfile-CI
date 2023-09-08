@@ -55,7 +55,9 @@ pipeline {
                         }
                         log.info ("PR diff: ${PR_DIFF}")
                         apps.each { app, path ->
-                            if (isChanged(PR_DIFF, path)) {
+                            CHANGE = isChanged(PR_DIFF, path)
+                            log.info ("Change check for ${PR_DIFF} in ${path}: ${CHANGE}")
+                            if (CHANGE) {
                                 BUILD_APPS.put(app, path)
                             }
                         }
