@@ -1,4 +1,4 @@
-def stageImageCreate(app, path, lock_id) {
+def call(app, path, lock_id) {
     return {
         stage(app) {
             lock("Image-create-lock-${lock_id}") {
