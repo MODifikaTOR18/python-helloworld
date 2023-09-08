@@ -23,9 +23,10 @@ pipeline {
                 script {
                     log.info("Starting preparation steps...")
                     PR_ID = prID.prID(env.BRANCH_NAME)
-                    apps = ${SERVICE}
                     log.info ("Branch: ${env.BRANCH_NAME}")
                     log.info ("Pull request ID: ${PR_ID}")
+                    apps = ${SERVICE}
+                    log.info ("Build app is ${apps}")
 
                     TAG_STACK = sh(returnStdout: true, script: "git tag --sort version:refname | tail -1").trim()
                     
@@ -80,7 +81,7 @@ pipeline {
         // }
 
         stage ('Parallel create image') {
-            when { expression { BRANCH_NAME == 'master'}} //|| BRANCH_NAME ==~ "pr-"+/\d+/ } }
+            when { expression { BRANCH_NAME == 'master'}}
             steps {
                 script {
                     log.info("Starting parallel image create...")
@@ -99,7 +100,7 @@ pipeline {
         }
 
         stage ('Push image') {
-            when { expression { BRANCH_NAME == 'master'}} //|| BRANCH_NAME ==~ "PR-"+/\d+/ } }
+            when { expression { BRANCH_NAME == 'master'}}
             steps {
                 script {
                     log.info("Beginning to push images to GitHub...")
