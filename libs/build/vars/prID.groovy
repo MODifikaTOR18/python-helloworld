@@ -1,4 +1,4 @@
-def prID(branch) {
+def call(branch) {
     if (branch =~ /PR-*/) {
         pr_id = env.CHANGE_ID
         println ("Changes in branch: ${env.CHANGE_ID}")

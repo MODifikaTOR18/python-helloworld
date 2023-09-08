@@ -26,7 +26,7 @@ pipeline {
                     log.info ("Change id: ${env.CHANGE_ID}")
                     log.info ("Apps: ${env.SERVICE}")
                     log.info ("Branch: ${env.BRANCH_NAME}")
-                    PR_ID = prID.prID(env.BRANCH_NAME)
+                    PR_ID = prID(env.BRANCH_NAME)
                     log.info ("Pull request ID: ${PR_ID}")
                     apps = env.SERVICE
                     log.info ("Build app is ${apps}")
@@ -47,14 +47,15 @@ pipeline {
                                                     authentication: 'GitHub_ID'
 
 
-                        log.info("Request status Github API: "+response.status)
+                        log.info ("Request status Github API: " + response.status)
+                        log.info ("Request answer contents: " + response.content)
                         PR_DIFF_DATA = readJSON text: response.content
                         PR_DIFF_DATA.each { item ->
                             PR_DIFF.add(item.filename)
                         }
                         log.info ("PR diff: ${PR_DIFF}")
                         apps.each { app, path ->
-                            if (isChanged.isChanged(PR_DIFF, path)) {
+                            if (isChanged(PR_DIFF, path)) {
                                 BUILD_APPS.put(app, path)
                             }
                         }
