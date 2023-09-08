@@ -40,7 +40,7 @@ pipeline {
                     
                     PR_DIFF=sh(script: 'git show --pretty=format: --name-only', returnStdout: true).trim()
                     log.info ("Pull request diffs:\n${PR_DIFF}")
-                    if (PR_ID.isEmpty()) {
+                    if (!PR_ID.isEmpty()) {
                         log.warning ("Pull request id not found")
                         def response = httpRequest url: "https://api.github.com/repos/${GIT_REPO_OWNER}/${GIT_REPO_NAME}/pulls/${PR_ID}/files",
                                                     customHeaders: [[name: 'Accept', value: 'application/vnd.github+json'],[name: 'X-GitHub-Api-Version', value: '2022-11-28']],
