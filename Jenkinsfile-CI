@@ -87,7 +87,11 @@ pipeline {
         // }
 
         stage ('Parallel create image') {
-            when { expression { BRANCH_NAME == 'master'}}
+            when { allOf {
+                expression { BRANCH_NAME == 'master' }
+                expression { !BUILD_APPS.isEmpty() }
+                }
+            } 
             steps {
                 script {
                     log.info("Starting parallel image create...")
