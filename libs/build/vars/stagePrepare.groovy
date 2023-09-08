@@ -1,4 +1,4 @@
-def call(flag, apps, parallel_count) {
+def call(flag, apps, parallel_count, built_apps = [:]) {
     stageList = []
     stageMap = [:]
     apps.eachWithIndex { app, path, i ->
