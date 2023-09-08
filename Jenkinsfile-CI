@@ -21,11 +21,14 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    log.info("Starting preparation steps...")
+                    log.info ("Starting preparation steps...")
+                    log.info ("Current environment:")
+                    log.info ("Change id: ${env.CHANGE_ID}")
+                    log.info ("Apps: ${env.SERVICE}")
                     log.info ("Branch: ${env.BRANCH_NAME}")
                     PR_ID = prID.prID(env.BRANCH_NAME)
                     log.info ("Pull request ID: ${PR_ID}")
-                    apps = ${env.SERVICE}
+                    apps = env.SERVICE
                     log.info ("Build app is ${apps}")
 
                     TAG_STACK = sh(returnStdout: true, script: "git tag --sort version:refname | tail -1").trim()
