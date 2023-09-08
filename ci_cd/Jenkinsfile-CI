@@ -5,42 +5,40 @@ def stagePrepare(flag, apps, parallel_count) {
     stageMap = [:]
     apps.eachWithIndex { app, path, i ->
         Integer lock_id = i % parallel_count
-        if (flag == 'build') {
-            stageMap.put(app, stageBuildCreate(app, path, lock_id))
-        } else {
-            stageMap.put(app, stageImageCreate(app, path, lock_id))
-        }
+        // if (flag == 'build') {
+        //     stageMap.put(app, stageBuildCreate(app, path, lock_id))
+        // } else {
+        stageMap.put(app, stageImageCreate(app, path, lock_id))
+        // }
     }
     stageList.add(stageMap)
     return stageList
 }
 
-def stageBuildCreate(app, path, lock_id) {
-    return {
-        stage(app) {
-            lock("Build-lock-${lock_id}") {
-                dir(path) {
-                    sh """
-                        docker rm -f ${app}
-                        [ -d target] || mkdir target
-                        docker build -t ${app} -f Dockerfile-build .
-                        docker run --name ${app} ${app} mvn test &&
-                        docker cp ${app}:/app/target/ target/
-                        docker rm -f ${app}
-                    """
-                    builtApps.put(app, path)
-                }
-            }
-        }
-    }
-}
+// def stageBuildCreate(app, path, lock_id) {
+//     return {
+//         stage(app) {
+//             lock("Build-lock-${lock_id}") {
+//                 dir(path) {
+//                     sh """
+//                         docker rm -f ${app}
+//                         [ -d target] || mkdir target
+//                         docker build -t ${app} -f Dockerfile-build .
+//                         docker rm -f ${app}
+//                     """
+//                     builtApps.put(app, path)
+//                 }
+//             }
+//         }
+//     }
+// }
 
 def stageImageCreate(app, path, lock_id) {
     return {
         stage(app) {
             lock("Image-create-lock-${lock_id}") {
                 dir (path) {
-                    sh "docker build -t ${app} -f Dockerfile-create ."
+                    sh "docker build -t ${app} ."
                 }
             }
         }
@@ -108,39 +106,39 @@ pipeline {
                     log.info("Build apps: ${BUILD_APPS}")
                     Integer PARALLEL_EXECUTE_COUNT = 1
                     builtApps = [:]
-                    buildStages = stagePrepare('build', BUILD_APPS, PARALLEL_EXECUTE_COUNT, builtApps)
+                    buildStages = stagePrepare('image', BUILD_APPS, PARALLEL_EXECUTE_COUNT, builtApps)
                     log.info("Prepared!")
                 }
             }
         }
 
-        stage ('Parallel build') {
-            steps {
-                script {
-                    log.info("Starting parallel image build...")
-                    buildStages.each { stage ->
-                        parallel stage
-                    }
-                    log.info("Parallel image build succeeded!")
-                }
-            }
-        }
+        // stage ('Parallel build') {
+        //     steps {
+        //         script {
+        //             log.info("Starting parallel image build...")
+        //             buildStages.each { stage ->
+        //                 parallel stage
+        //             }
+        //             log.info("Parallel image build succeeded!")
+        //         }
+        //     }
+        // }
 
-        stage ('Parallel create image') {
-            when { expression { BRANCH_NAME == 'master'}} //|| BRANCH_NAME ==~ "pr-"+/\d+/ } }
-            steps {
-                script {
-                    log.info("Starting parallel image create...")
-                    log.info("Apps were built: ${builtApps}")
-                    Integer PARALLEL_EXECUTE_COUNT = 1
-                    createImageStages = stagePrepare.call('image', builtApps, PARALLEL_EXECUTE_COUNT)
-                    createImageStages.each { stage ->
-                        parallel stage
-                    }
-                    log.info("Images were created.")
-                }
-            }
-        }
+        // stage ('Parallel create image') {
+        //     when { expression { BRANCH_NAME == 'master'}} //|| BRANCH_NAME ==~ "pr-"+/\d+/ } }
+        //     steps {
+        //         script {
+        //             log.info("Starting parallel image create...")
+        //             log.info("Apps were built: ${builtApps}")
+        //             Integer PARALLEL_EXECUTE_COUNT = 1
+        //             createImageStages = stagePrepare.call('image', builtApps, PARALLEL_EXECUTE_COUNT)
+        //             createImageStages.each { stage ->
+        //                 parallel stage
+        //             }
+        //             log.info("Images were created.")
+        //         }
+        //     }
+        // }
 
         stage ('Push image') {
             when { expression { BRANCH_NAME == 'master'}} //|| BRANCH_NAME ==~ "PR-"+/\d+/ } }
