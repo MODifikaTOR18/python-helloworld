@@ -22,7 +22,7 @@ pipeline {
             steps {
                 script {
                     log.info("Starting preparation steps...")
-                    PR_ID = prID.prID(env.BRANCH_NAME)
+                    PR_ID = prID(BRANCH_NAME)
                     log.info ("Branch: ${env.BRANCH_NAME}")
                     log.info ("Pull request ID: ${PR_ID}")
                     apps = ${SERVICE}
