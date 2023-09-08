@@ -46,11 +46,11 @@ pipeline {
                                                     customHeaders: [[name: 'Accept', value: 'application/vnd.github+json'],[name: 'X-GitHub-Api-Version', value: '2022-11-28']],
                                                     authentication: 'GitHub_ID'
 
-
-                        log.info ("Request status Github API: " + response.status)
-                        log.info ("Request answer contents: " + response.content)
+                        log.info ("Request status Github API: ${response.status}")
                         PR_DIFF_DATA = readJSON text: response.content
+                        log.info ("Request answer contents: ${PR_DIFF_DATA}")
                         PR_DIFF_DATA.each { item ->
+                            log.info ("PR_DIFF item filename: ${item.filename}")
                             PR_DIFF.add(item.filename)
                         }
                         log.info ("PR diff: ${PR_DIFF}")
