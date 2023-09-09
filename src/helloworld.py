@@ -9,5 +9,5 @@ import metrics.export_metric
 
 if __name__ == '__main__':
     elem_count = random.randrange(100, 1000)
-    metrics.export_metric(elem_count)
+    metrics.export_metric.export(elem_count)
     sys.exit(helloworld.main.main())

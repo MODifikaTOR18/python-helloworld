@@ -14,7 +14,7 @@ class MetricsCollector(object):
         yield gauge
 
 
-def __init__(exported_count):
+def export(exported_count):
     # Порт, на котором будет подниматься веб-сервер
     port = 9000
     start_http_server(port)
