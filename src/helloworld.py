@@ -5,9 +5,9 @@
 import sys
 import helloworld.main
 import random
-import metrics.export_metric
+import metrics.export_metric as metrics
 
 if __name__ == '__main__':
     elem_count = random.randrange(100, 1001)
-    metrics.export_metric(elem_count)
+    metrics.export(elem_count)
     sys.exit(helloworld.main.main())
