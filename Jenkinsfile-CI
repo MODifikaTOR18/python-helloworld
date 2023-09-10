@@ -132,8 +132,9 @@ pipeline {
                         sh """
                             docker save -o /tmp/app.tar "${app}:${TAG}"
                             chmod 0644 /tmp/app.tar
-                            whoami
-                            scp -i /tmp/jenkins/rev_ssh/diplom.pem /tmp/app.tar ubuntu@\$(cat /tmp/jenkins/rev_ssh/remote_ip.txt):/tmp/app.tar
+                            cd /tmp/jenkins/rev_ssh
+                            pwd
+                            scp -i diplom.pem ../../app.tar ubuntu@\$(cat remote_ip.txt):/tmp/app.tar
                         """
                     }
                 }
