@@ -130,11 +130,11 @@ pipeline {
                     log.info ("Started to load image into Kubernetes Kind")
                     builtApps.each { app, path ->
                         IMAGE_NAME = "${app}:${TAG}"
-                        sh """
+                        sh '''
                             docker save -o /tmp/app.tar "${IMAGE_NAME}"
                             # chmod 0644 /tmp/app.tar
                             # scp /tmp/app.tar ubuntu@$(cat /tmp/jenkins/rev_ssh/remote_ip.txt):/tmp/app.tar -i /tmp/jenkins/rev_ssh/diplom.pem
-                        """
+                        '''
                     }
                     
                 }
