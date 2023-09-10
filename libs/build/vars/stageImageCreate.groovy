@@ -3,7 +3,8 @@ def call(app, path, lock_id) {
         stage(app) {
             lock("Image-create-lock-${lock_id}") {
                 dir (path) {
-                    sh "docker build -t ${app} ."
+                    sh "ls -la"
+                    sh "docker build -t ${app} -f Dockerfile"
                 }
             }
         }
