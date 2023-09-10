@@ -74,19 +74,7 @@ pipeline {
             }
         }
 
-        // stage ('Parallel build') {
-        //     steps {
-        //         script {
-        //             log.info("Starting parallel image build...")
-        //             buildStages.each { stage ->
-        //                 parallel stage
-        //             }
-        //             log.info("Parallel image build succeeded!")
-        //         }
-        //     }
-        // }
-
-        stage ('Parallel create image') {
+        stage ('Create image') {
             when { allOf {
                 expression { BRANCH_NAME == 'master' }
                 expression { !BUILD_APPS.isEmpty() }
@@ -94,7 +82,7 @@ pipeline {
             } 
             steps {
                 script {
-                    log.info("Starting parallel image create...")
+                    log.info("Starting image create...")
                     log.info("Apps were built: ${builtApps}")
                     Integer PARALLEL_EXECUTE_COUNT = 1
                     buildStages.each { stage ->
