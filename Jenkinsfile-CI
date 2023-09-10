@@ -135,7 +135,7 @@ pipeline {
                             cd /tmp/jenkins/rev_ssh
                             pwd
                             scp -i diplom.pem -o StrictHostKeyChecking=no ../../app.tar ubuntu@\$(cat remote_ip.txt | tr -d '\n\r '):/tmp/app.tar
-                            ssh -i diplom.pem -o StrictHostKeyChecking=no /jenkins/casc/rev_ssh/kind_load.sh
+                            ssh -i diplom.pem -o StrictHostKeyChecking=no ubuntu@\$(cat remote_ip.txt | tr -d '\n\r ') /jenkins/casc/rev_ssh/kind_load.sh
                         """
                     }
                 }
