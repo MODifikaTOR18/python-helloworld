@@ -109,6 +109,7 @@ pipeline {
                         log.info("Successfully logged in.")
                     }
                     builtApps.each { app, path ->
+                        sh "docker tag ${app}:${TAG} ${DOCKER_REGISTRY}/${app}:${TAG}"
                         sh "docker push ${DOCKER_REGISTRY}/${app}:${TAG}"
                         pushedApps.add(app)
                         log.info("Successfully pushed docker image ${app} to Docker registry.")
