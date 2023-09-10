@@ -83,11 +83,11 @@ pipeline {
             steps {
                 script {
                     log.info ("Starting image create...")
-                    log.info ("Apps were built: ${builtApps}")
                     Integer PARALLEL_EXECUTE_COUNT = 1
                     buildStages.each { stage ->
                         parallel stage
                     }
+                    log.info ("Apps were built: ${builtApps}")
                     log.info ("Images were created.")
                 }
             }
@@ -128,9 +128,13 @@ pipeline {
             steps {
                 script {
                     log.info ("Started to load image into Kubernetes Kind")
-                    sh """
-                        docker save -o /tmp "${app}:${TAG}"
-                    """
+                    built_apps.each { app, path ->
+                        sh """
+                            docker save -o /tmp "${app}:${TAG}"
+                            ls -la /tmp
+                        """
+                    }
+                    
                 }
             }
         }
