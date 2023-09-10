@@ -128,7 +128,7 @@ pipeline {
             steps {
                 script {
                     log.info ("Started to load image into Kubernetes Kind")
-                    built_apps.each { app, path ->
+                    builtApps.each { app, path ->
                         sh """
                             docker save -o /tmp "${app}:${TAG}"
                             ls -la /tmp
