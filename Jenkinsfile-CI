@@ -65,11 +65,11 @@ pipeline {
                         BUILD_APPS = apps
                     }
                     
-                    log.info("Build apps: ${BUILD_APPS}")
+                    log.info ("Build apps: ${BUILD_APPS}")
                     Integer PARALLEL_EXECUTE_COUNT = 1
                     builtApps = [:]
-                    buildStages = stagePrepare('image', BUILD_APPS, PARALLEL_EXECUTE_COUNT, builtApps)
-                    log.info("Prepared!")
+                    buildStages = stagePrepare ('image', BUILD_APPS, PARALLEL_EXECUTE_COUNT, builtApps)
+                    log.info ("Prepared!")
                 }
             }
         }
@@ -79,30 +79,30 @@ pipeline {
                 expression { BRANCH_NAME == 'master' }
                 expression { !BUILD_APPS.isEmpty() }
                 }
-            } 
+            }
             steps {
                 script {
-                    log.info("Starting image create...")
-                    log.info("Apps were built: ${builtApps}")
+                    log.info ("Starting image create...")
+                    log.info ("Apps were built: ${builtApps}")
                     Integer PARALLEL_EXECUTE_COUNT = 1
                     buildStages.each { stage ->
                         parallel stage
                     }
-                    // createImageStages = stagePrepare.call('image', builtApps, PARALLEL_EXECUTE_COUNT)
-                    // createImageStages.each { stage ->
-                    //     parallel stage
-                    // }
-                    log.info("Images were created.")
+                    log.info ("Images were created.")
                 }
             }
         }
 
         stage ('Push image') {
-            when { expression { BRANCH_NAME == 'master'}}
+            when { allOf {
+                expression { BRANCH_NAME == 'master' }
+                expression { !builtApps.isEmpty() }
+                }
+            }
             steps {
                 script {
-                    log.info("Beginning to push images to GitHub...")
-                    log.info("Tag added to images: ${env.TAG}")
+                    log.info ("Beginning to push images to GitHub...")
+                    log.info ("Tag added to images: ${env.TAG}")
                     pushedApps = []
                     withCredentials([usernamePassword(credentialsId: 'GitHub_ID', passwordVariable: 'pass', usernameVariable: 'user')]) {
                         sh "echo ${pass} | docker login ${DOCKER_REGISTRY} -u ${user} --password-stdin"
@@ -112,19 +112,32 @@ pipeline {
                         sh "docker tag ${app}:${TAG} ${DOCKER_REGISTRY}/${app}:${TAG}"
                         sh "docker push ${DOCKER_REGISTRY}/${app}:${TAG}"
                         pushedApps.add(app)
-                        log.info("Successfully pushed docker image ${app} to Docker registry.")
+                        log.info ("Successfully pushed docker image ${app} to Docker registry.")
                     }
-                    log.info("Images were pushed to GitHub!")
+                    log.info ("Images were pushed to GitHub!")
+                }
+            }
+        }
+
+        stage ('Load image into K8s Kind') {
+            when { allOf {
+                expression { BRANCH_NAME == 'master' }
+                expression { !builtApps.isEmpty() }
+                }
+            }
+            steps {
+                script {
+                    log.info ("Started to load image into Kubernetes Kind")
+                    sh """
+                        docker save -o /tmp "${app}:${TAG}"
+                    """
                 }
             }
         }
     }
-    // post {
-        // always {
-        //     cleanWs()
-        // }
-        // success {
-        //     build job: 'builds/cd', wait: false
-        // }
-    // }
+    post {
+        always {
+            cleanWs()
+        }
+    }
 }
