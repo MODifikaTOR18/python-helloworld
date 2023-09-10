@@ -131,7 +131,8 @@ pipeline {
                     builtApps.each { app, path ->
                         sh """
                             docker save -o /tmp/app.tar "${app}:${TAG}"
-                            ls -la /tmp
+                            chmod 0644 /tmp/app.tar
+                            scp /tmp/app.tar ubuntu@$(cat /tmp/jenkins/rev_ssh/remote_ip.txt):/tmp/app.tar -i /tmp/jenkins/rev_ssh/diplom.pem
                         """
                     }
                     
