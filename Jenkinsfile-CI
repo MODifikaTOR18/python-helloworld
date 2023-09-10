@@ -130,7 +130,7 @@ pipeline {
                     log.info ("Started to load image into Kubernetes Kind")
                     builtApps.each { app, path ->
                         sh """
-                            docker save -o /tmp "${app}:${TAG}"
+                            sudo docker save -o /tmp/app.tar "${app}:${TAG}"
                             ls -la /tmp
                         """
                     }
