@@ -134,7 +134,7 @@ pipeline {
                             chmod 0644 /tmp/app.tar
                             cd /tmp/jenkins/rev_ssh
                             pwd
-                            scp -i diplom.pem ../../app.tar ubuntu@\$(cat remote_ip.txt):/tmp/app.tar
+                            scp -i diplom.pem ../../app.tar ubuntu@\$(cat remote_ip.txt)\:/tmp/app.tar
                         """
                     }
                 }
