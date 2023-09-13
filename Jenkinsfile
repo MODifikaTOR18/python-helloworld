@@ -63,10 +63,12 @@ pipeline {
                             log.info ("Change check for ${PR_DIFF} and ${path}: ${CHANGE}")
                             if (CHANGE) {
                                 BUILD_APPS.put(app, path)
+                                isPR_DIFFS = true
                             }
                         }
                     } else {
                         BUILD_APPS = apps
+                        isPR_DIFFS = false
                     }
                     
                     log.info ("Build apps: ${BUILD_APPS}")
@@ -151,9 +153,14 @@ pipeline {
             cleanWs()
         }
         success {
+            if (!pushedApps.isEmpty()) {
+                PUBLISHED = true
+            } else {
+                PUBLISHED = false
+            }
             withCredentials([string(credentialsId: 'botSecret', variable: 'TOKEN'), string(credentialsId: 'chatId', variable: 'CHAT_ID')]) {
             sh  ("""
-                curl -s -X POST https://api.telegram.org/bot${TOKEN}/sendMessage -d chat_id=${CHAT_ID} -d parse_mode=markdown -d text='*${env.JOB_NAME}* : POC *Branch*: ${env.GIT_BRANCH} *Build* : OK *Published* = YES'
+                curl -s -X POST https://api.telegram.org/bot${TOKEN}/sendMessage -d chat_id=${CHAT_ID} -d parse_mode=markdown -d text='*${env.JOB_NAME}* : *Branch*: ${env.GIT_BRANCH} : *From pull request* ${isPR_DIFFS} : *Build* : OK *Published* = ${PUBLISHED}'
             """)
             }
         }
