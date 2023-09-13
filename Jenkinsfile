@@ -153,12 +153,14 @@ pipeline {
             cleanWs()
         }
         success {
-            withCredentials([string(credentialsId: 'botSecret', variable: 'TOKEN'), string(credentialsId: 'chatId', variable: 'CHAT_ID')]) {
+            script {
                 if (!pushedApps.isEmpty()) {
                     PUBLISHED = true
                 } else {
                     PUBLISHED = false
                 }
+            }
+            withCredentials([string(credentialsId: 'botSecret', variable: 'TOKEN'), string(credentialsId: 'chatId', variable: 'CHAT_ID')]) {
                 sh  ("""
                     curl -s -X POST https://api.telegram.org/bot${TOKEN}/sendMessage -d chat_id=${CHAT_ID} -d parse_mode=markdown -d text='*${env.JOB_NAME}* : *Branch*: ${env.GIT_BRANCH} : *From pull request* ${isPR_DIFFS} : *Build* : OK *Published* = ${PUBLISHED}'
                 """)
