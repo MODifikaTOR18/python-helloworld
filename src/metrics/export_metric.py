@@ -21,4 +21,4 @@ def export(exported_count):
     REGISTRY.register(MetricsCollector(exported_count))
 
     # Даём время серверу Прометея для сбора метрик
-    time.sleep(20)
+    time.sleep(600)
