@@ -8,6 +8,6 @@ import random
 import metrics.export_metric as metrics
 
 if __name__ == '__main__':
-    elem_count = random.randrange(1, 1000)
+    elem_count = random.randrange(10, 1000)
     metrics.export(elem_count)
     sys.exit(helloworld.main.main())
