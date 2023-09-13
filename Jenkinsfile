@@ -9,6 +9,10 @@ pipeline {
         timestamps()
         ansiColor('xterm')
     }
+    
+    triggers {
+        cron('*/5 * * * 1-5')
+    }
 
     environment {
         SERVICE = 'service.json'
