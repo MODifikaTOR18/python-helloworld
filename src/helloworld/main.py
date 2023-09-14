@@ -21,6 +21,6 @@ def main(argv=None):
     # ensures the user hasn't passed any other unrecognized arguments.
     parser.parse_args(argv[1:])
 
-    print("Hello, world, this is updated app version")
+    print("Hello, world!")
 
     return 0
